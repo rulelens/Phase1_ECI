@@ -8,7 +8,7 @@ from langchain.prompts import PromptTemplate
 
 # Set up Azure OpenAI API Key and Endpoint
 AZURE_OPENAI_API_KEY = "3fNKV7862iMKIKd8mLrSuIpOawPAoLJJfXYSXwC1mL5UCpktcaZuJQQJ99BCACYeBjFXJ3w3AAABACOG7FLX"  # 🔹 Replace with your actual API key
-AZURE_OPENAI_ENDPOINT = "https://rulelesns.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview"  # 🔹 Replace with your actual endpoint
+AZURE_OPENAI_ENDPOINT = "https://rulelesns.openai.azure.com/"  # 🔹 Replace with your actual endpoint
 AZURE_OPENAI_DEPLOYMENT_NAME = "gpt-4o-mini"  # 🔹 Replace with your deployment name
 API_VERSION = "2023-03-15-preview"  # Set the appropriate API version
 
