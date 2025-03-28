@@ -7,9 +7,9 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import PromptTemplate
 
 # Set up Azure OpenAI API Key and Endpoint
-AZURE_OPENAI_API_KEY = "your-azure-openai-api-key"  # 🔹 Replace with your actual API key
-AZURE_OPENAI_ENDPOINT = "your-azure-openai-endpoint"  # 🔹 Replace with your actual endpoint
-AZURE_OPENAI_DEPLOYMENT_NAME = "your-deployment-name"  # 🔹 Replace with your deployment name
+AZURE_OPENAI_API_KEY = "FCPk7Dx6DLNh4rybye220enr4brAvkqKj8BzsCGnVYPHkBc6dlBDJQQJ99BCACYeBjFXJ3w3AAABACOGdFFs"  # 🔹 Replace with your actual API key
+AZURE_OPENAI_ENDPOINT = "https://dpai-assistant.openai.azure.com/"  # 🔹 Replace with your actual endpoint
+AZURE_OPENAI_DEPLOYMENT_NAME = "GPT-4o mini"  # 🔹 Replace with your deployment name
 
 DB_FAISS_PATH = "vectorstore/db_faiss"
 
