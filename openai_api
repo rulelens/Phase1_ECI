@@ -1,46 +1,48 @@
 import os
 import streamlit as st
-from langchain_openai import AzureOpenAI  # ✅ Use Azure OpenAI API
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.chat_models import AzureChatOpenAI  # Correct class for Azure OpenAI
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import PromptTemplate
+from langchain.prompts import PromptTemplate
 
 # Set up Azure OpenAI API Key and Endpoint
 AZURE_OPENAI_API_KEY = "FCPk7Dx6DLNh4rybye220enr4brAvkqKj8BzsCGnVYPHkBc6dlBDJQQJ99BCACYeBjFXJ3w3AAABACOGdFFs"  # 🔹 Replace with your actual API key
 AZURE_OPENAI_ENDPOINT = "https://dpai-assistant.openai.azure.com/"  # 🔹 Replace with your actual endpoint
 AZURE_OPENAI_DEPLOYMENT_NAME = "GPT-4o mini"  # 🔹 Replace with your deployment name
+API_VERSION = "2023-03-15-preview"  # Set the appropriate API version
 
-DB_FAISS_PATH = "vectorstore/db_faiss"
-
+# Set up Streamlit UI
 st.set_page_config(page_title="RuleLens: Simplifying Government Rules", layout="wide")
 
 st.sidebar.title("Chat History")
 st.sidebar.markdown("---")
 
+# Cache vectorstore to avoid reloading it repeatedly
 @st.cache_resource
 def get_vectorstore():
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     try:
-        db = FAISS.load_local(DB_FAISS_PATH, embedding_model, allow_dangerous_deserialization=True)
+        db = FAISS.load_local("vectorstore/db_faiss", embedding_model, allow_dangerous_deserialization=True)
         return db
     except Exception as e:
         st.error(f"Error loading vector store: {str(e)}")
         return None
 
-# ✅ Initialize Azure OpenAI LLM
+# Initialize the Azure OpenAI model (ChatGPT-like)
 def load_llm():
-    return AzureOpenAI(
+    return AzureChatOpenAI(
         openai_api_key=AZURE_OPENAI_API_KEY,
-        openai_api_base=AZURE_OPENAI_ENDPOINT,
         deployment_name=AZURE_OPENAI_DEPLOYMENT_NAME,
-        temperature=0.1
+        endpoint=AZURE_OPENAI_ENDPOINT,
+        api_version=API_VERSION  # Set API version here
     )
 
+# Custom prompt template
 CUSTOM_PROMPT_TEMPLATE = """
-Use the pieces of information provided in the context to answer user's question.
+Use the pieces of information provided in the context to answer the user's question.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
-Don't provide anything out of the given context. 
+Don't provide anything out of the given context.
 
 Context: {context}
 Question: {question}
@@ -51,45 +53,56 @@ Start the answer directly. No small talk, please.
 def set_custom_prompt():
     return PromptTemplate(template=CUSTOM_PROMPT_TEMPLATE, input_variables=["context", "question"])
 
+# Handle chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display chat history in the sidebar
 for i, message in enumerate(reversed(st.session_state.messages)):
     if message["role"] == "user":
         if st.sidebar.button(f"🔹 {message['content']}", key=f"history_{i}"):
             st.session_state.selected_question = message["content"]
 
+# Main content area
 st.title("RuleLens: Simplifying Government Rules")
 
+# Display chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# Input for the user
 prompt = st.chat_input("Ask a government-related question...")
 
+# Process the prompt and fetch the answer
 if prompt:
     st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
     try:
+        # Load vector store and QA chain
         vectorstore = get_vectorstore()
         if vectorstore is None:
             st.error("Vector store failed to load. Please check the database.")
         else:
+            # Create the QA chain
             qa_chain = RetrievalQA.from_chain_type(
-                llm=load_llm(),  # ✅ Pass Azure OpenAI LLM
+                llm=load_llm(),  # Use Azure OpenAI LLM
                 chain_type="stuff",
                 retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
                 return_source_documents=False,
                 chain_type_kwargs={"prompt": set_custom_prompt()}
             )
 
+            # Get the response from the QA chain
             response = qa_chain.invoke({"query": prompt})
             result = response["result"]
 
+            # Display the assistant's response
             with st.chat_message("assistant"):
                 st.markdown(result)
 
+            # Store the assistant's response in the chat history
             st.session_state.messages.append({"role": "assistant", "content": result})
 
     except Exception as e:
