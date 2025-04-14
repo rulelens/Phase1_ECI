@@ -26,12 +26,12 @@ def get_vectorstore():
         return None  # Prevents further execution issues
 
 def load_llm():
-    return Ollama(model="mistral", temperature=0.2)
+    return Ollama(model="mistral", temperature=0.1)
 
 CUSTOM_PROMPT_TEMPLATE = """
 Use the pieces of information provided in the context to answer user's question.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
-Don't provide anything out of the given context. If user asks to translate the answer into Telugu, translate it.
+Don't provide anything out of the given context.
 
 Context: {context}
 Question: {question}
